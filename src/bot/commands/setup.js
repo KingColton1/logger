@@ -301,6 +301,14 @@ async function handleIndividualSetup (interaction, recursionUUID) {
             interaction.channel.id
         },
         {
+          label: 'Member Timeout',
+          description: 'On member being timed out',
+          value: 'guildMemberTimeout',
+          default: guildEvents
+            .guildMemberTimeout ===
+            interaction.channel.id
+        },
+        {
           label: 'Member Leave',
           description:
             'On member leaving the server',
