@@ -46,7 +46,11 @@ async function paste (messages, guildID) {
             name: 'Link',
             value: `https://haste.logger.bot/${res.body.key}.txt`
           })
-          send(messageDeleteBulkEvent)
+          send({
+            guildID: guildID,
+            eventName: 'messageDeleteBulk',
+            embeds: messageDeleteBulkEvent.embeds
+          })
         } else {
           global.logger.error(err)
           global.webhook.error('An error has occurred while posting to the paste website. Check logs for more.')

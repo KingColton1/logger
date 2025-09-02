@@ -1,32 +1,76 @@
 const sa = require('superagent')
+const { EMBED_COLORS } = require('../utils/constants.js')
+const { getEmbedFooter, getAuthorField } = require('../utils/embeds.js')
 
 module.exports = {
-  func: async (message, suffix) => {
-    if (!suffix || isNaN(suffix)) return message.channel.createMessage('That isn\'t a valid suffix! Please provide any number between 5 and 1000 (10,000 if Patreon).')
-    const num = parseInt(suffix)
-    if (num < 5 || num > 1000) return message.channel.createMessage('That number is invalid! Please provide any number between 5 and 1000 (10,000 if Patreon)')
-    message.channel.getMessages({ limit: num }).then(messages => {
-      const pasteString = messages.reverse().filter(m => !m.applicationID).map(m => `${m.author.username}#${m.author.discriminator} (${m.author.id}) | ${new Date(m.timestamp).toUTCString()}: ${m.content ? m.content : ''} ${m.embeds.length === 0 ? '' : `| {"embeds": [${m.embeds.map(e => JSON.stringify(e))}]}`} | ${m.attachments.length === 0 ? '' : ` =====> Attachment: ${m.attachments[0].filename}:${m.attachments[0].url}`}`).join('\r\n')
-      sa
-        .post(process.env.PASTE_CREATE_ENDPOINT)
-        .set('Authorization', process.env.PASTE_CREATE_TOKEN)
-        .set('Content-Type', 'text/plain')
-        .send(pasteString || 'No messages were able to be archived')
-        .end((err, res) => {
-          if (!err && res.statusCode === 200 && res.body.key) {
-            message.channel.createMessage(`<@${message.author.id}>, **${messages.length}** message(s) could be archived. Link: https://haste.logger.bot/${res.body.key}.txt`)
-          } else {
-            global.logger.error(err, res.body)
-            global.webhook.error('An error has occurred while posting to the paste website. Check logs for more.')
-          }
-        })
-    })
-  },
   name: 'archive',
-  category: 'Utility',
-  perm: 'manageMessages',
-  quickHelp: 'Makes a log online of up to the last 1000 messages in a channel. Does NOT delete any messages. Patreon bot only: fetch 10,000 messages & [upgraded log site](https://logs.discord.website/logs/W9NbmmULEpxMFMoiBuKrYG)',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}archive 5\` <- lowest amount possible
-  \`${process.env.GLOBAL_BOT_PREFIX}archive 1000\` <- maximum count of messages to archive
-  \`${process.env.GLOBAL_BOT_PREFIX}archive 25\` <- create a log of the last 25 messages in the channel`
+  botPerms: ['readMessageHistory'],
+  userPerms: ['readMessageHistory', 'manageMessages'],
+  async execute(interaction) {
+    if (!interaction.data.options || !interaction.data.options[0] || interaction.data.options[0].value > 1000 || interaction.data.options[0].value < 5) {
+      interaction.createMessage({
+        embeds: [{
+          title: 'Unsuccessful',
+          description: 'Amount must be 5 <= amount < 1000',
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          color: EMBED_COLORS.RED,
+          footer: getEmbedFooter(global.bot.user),
+          author: getAuthorField(interaction.member.user)
+        }]
+      }).catch(() => {})
+    }
+    const fetchedMessages = await global.bot.getChannel(interaction.channel.id).getMessages({ limit: interaction.data.options[0].value })
+    const pasteString = fetchedMessages.reverse().filter(m => !m.applicationID).map(m => `${m.author.username}#${m.author.discriminator} (${m.author.id}) | ${new Date(m.timestamp)}: ${m.content ? m.content : ''} | ${m.embeds.length === 0 ? '' : `{"embeds": [${m.embeds.map(e => JSON.stringify(e))}]}`} | ${m.attachments.length === 0 ? '' : ` =====> Attachment: ${m.attachments[0].filename}:${m.attachments[0].url}`}`).join('\r\n')
+    try {
+      await interaction.createMessage({
+        embeds: [{ // make sure followup message is created before doing any more work
+          title: 'Processing',
+          description: `Processing request from ${interaction.member.username}#${interaction.member.discriminator} for an archive of ${interaction.data.options[0].value} messages`,
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          color: EMBED_COLORS.YELLOW_ORANGE,
+          footer: getEmbedFooter(global.bot.user),
+          author: getAuthorField(interaction.member.user)
+        }]
+      })
+    } catch (_) {}
+    sa
+      .post(process.env.PASTE_CREATE_ENDPOINT)
+      .set('Authorization', process.env.PASTE_CREATE_TOKEN)
+      .set('Content-Type', 'text/plain')
+      .send(pasteString || 'No messages were able to be archived')
+      .end((err, res) => {
+        if (!err && res.statusCode === 200 && res.body.key) {
+          interaction.editOriginalMessage({
+            embeds: [{
+              title: 'Success',
+              description: `Archived ${fetchedMessages.length} messages: https://haste.logger.bot/${res.body.key}.txt`,
+              thumbnail: {
+                url: interaction.member.user.dynamicAvatarURL(null, 64)
+              },
+              color: EMBED_COLORS.GREEN,
+              footer: getEmbedFooter(global.bot.user),
+              author: getAuthorField(interaction.member.user)
+            }]
+          }).catch(() => {})
+        } else {
+          interaction.editOriginalMessage({
+            embeds: [{
+              title: 'Error',
+              description: 'The archive service returned an error, please try again later!',
+              thumbnail: {
+                url: interaction.member.user.dynamicAvatarURL(null, 64)
+              },
+              color: EMBED_COLORS.RED,
+              footer: getEmbedFooter(global.bot.user)
+            }]
+          }).catch(() => {})
+          global.logger.error(err, res.body)
+          global.webhook.error('An error has occurred while posting to the paste website. Check logs for more.')
+        }
+      })
+  }
 }

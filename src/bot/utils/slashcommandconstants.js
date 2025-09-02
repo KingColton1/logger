@@ -244,6 +244,11 @@ exports.commands = [
             type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.STRING,
             name: 'Member Voice Muted/Deafened',
             value: 'voiceStateUpdate'
+          },
+          {
+            type: ERIS_CONSTANTS.ApplicationCommandOptionTypes.STRING,
+            name: 'Timeout Add/Remove',
+            value: 'timeout'
           }
         ]
       },

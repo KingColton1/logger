@@ -73,7 +73,11 @@ module.exports = {
           icon_url: user.avatarURL
         }
         guildEmojisUpdateEvent.embeds[0].fields[1].value = `\`\`\`ini\nUser = ${user.id}\nEmoji = ${emoji.id}\`\`\``
-        await send(guildEmojisUpdateEvent)
+        await send({
+          guildID: guild.id,
+          eventName: 'guildEmojisUpdate',
+          embeds: guildEmojisUpdateEvent.embeds
+        })
       }
     }, 1000)
   }

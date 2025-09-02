@@ -47,6 +47,10 @@ module.exports = {
         icon_url: user.avatarURL
       }
     }
-    await send(voiceStateUpdateEvent)
+    await send({
+      guildID: guild.id,
+      eventName: 'voiceStateUpdate',
+      embeds: [voiceStateUpdateEvent.embeds[0]]
+    })
   }
 }

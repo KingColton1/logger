@@ -208,7 +208,11 @@ module.exports = {
         channelUpdateEvent.embeds[0].description = `Stage Channel **${channel.name}** was ${channel.topic === null ? 'closed' : 'opened'}`
       }
       channelUpdateEvent.embeds[0].fields.push({ name: 'ID', value: `\`\`\`ini\nUser = ${user.id}\nChannel = ${channel.id}\`\`\`` })
-      await send(channelUpdateEvent)
+    await send({
+      guildID: channel.guild.id,
+      eventName: 'channelUpdate',
+      embeds: channelUpdateEvent.embeds
+    })
     } else {
       channelUpdateEvent.embeds[0].fields.push({
         name: 'ID',

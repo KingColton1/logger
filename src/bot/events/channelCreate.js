@@ -44,7 +44,7 @@ module.exports = {
         }
       })
     }
-    const logs = await newChannel.guild.getAuditLog({ actionType: 10, limit: 10 }).catch(() => {})
+      const logs = await newChannel.guild.getAuditLog({ actionType: 10, limit: 10 }).catch(() => { })
     if (!logs) return
     const log = logs.entries.find(e => e.targetID === newChannel.id && (new Date().getTime() - new Date((e.id / 4194304) + 1420070400000).getTime() < 3000))
     if (!log) return
@@ -56,6 +56,10 @@ module.exports = {
       channelCreateEvent.embeds[0].author.icon_url = user.avatarURL
       channelCreateEvent.embeds[0].fields[1].value = `\`\`\`ini\nUser = ${user.id}\nChannel = ${newChannel.id}\`\`\``
     }
-    await send(channelCreateEvent)
+      await send({
+        guildID: newChannel.guild.id,
+        eventName: 'channelCreate',
+        embeds: [channelCreateEvent.embeds[0]]
+      })
   }
 }

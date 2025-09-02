@@ -34,9 +34,17 @@ module.exports = {
         name: `${perp.username}#${perp.discriminator}`,
         icon_url: perp.avatarURL
       }
-      await send(guildRoleDeleteEvent)
+      await send({
+        guildID: guild.id,
+        eventName: 'guildRoleDelete',
+        embeds: guildRoleDeleteEvent.embeds
+      })
     } else {
-      await send(guildRoleDeleteEvent)
+      await send({
+        guildID: guild.id,
+        eventName: 'guildRoleDelete',
+        embeds: guildRoleDeleteEvent.embeds
+      })
     }
   }
 }

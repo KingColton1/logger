@@ -1,5 +1,5 @@
 const getAllGuilds = require('../../db/interfaces/postgres/read').getAllGuilds
-const GuildSettings = require('../bases/GuildSettings')
+const { GuildSettings } = require('../bases/GuildSettings')
 
 module.exports = async () => {
   const allDBGuilds = await getAllGuilds()
