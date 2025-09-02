@@ -1,4 +1,5 @@
-FROM node:current
+# Node.js bot Dockerfile
+FROM node:20-bullseye
 
 ARG buildno
 ARG commitsha
@@ -6,8 +7,7 @@ ARG commitsha
 ENV NODE_ENV=production
 
 
-LABEL author="Curtis Fowler (curtisf)" \
-      repository="https://github.com/curtisf/logger"
+LABEL author="Forked Logger by KingColton1" \ repository="https://github.com/kingcolton1/logger"
 
 RUN mkdir /opt/bot
 # Copy files and install modules

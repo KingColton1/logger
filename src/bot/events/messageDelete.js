@@ -64,7 +64,11 @@ module.exports = {
       name: 'ID',
       value: `\`\`\`ini\nUser = ${cachedMessage.author_id}\nMessage = ${cachedMessage.id}\`\`\``
     })
-    await send(messageDeleteEvent)
+    await send({
+      guildID: message.channel.guild.id,
+      eventName: 'messageDelete',
+      embeds: messageDeleteEvent.embeds
+    })
   }
 }
 

@@ -50,6 +50,11 @@ async function handlePresetSetup (interaction, recursionUUID) {
           value: 'member',
           default: interaction.channel.id === guildEvents.guildMemberUpdate && interaction.channel.id === guildEvents.guildMemberBoostUpdate && interaction.channel.id === guildEvents.guildMemberNickUpdate
         }, {
+          label: 'Timeout Events',
+          description: 'Member timed out or timeout removed',
+          value: 'timeout',
+          default: interaction.channel.id === guildEvents.timeout
+        }, {
           label: 'Moderation Events',
           description: 'Member banned/unbanned, kicked, and timed out',
           value: 'moderation',
@@ -370,6 +375,13 @@ async function handleIndividualSetup (interaction, recursionUUID) {
             'On member being muted or deafened',
           value: 'voiceStateUpdate',
           default: guildEvents.voiceStateUpdate === interaction.channel.id
+        },
+        {
+          label: 'Member Timeout Added/Removed',
+          description:
+            'On member being timed out or timeout removed',
+          value: 'timeout',
+          default: guildEvents.timeout === interaction.channel.id
         }
         ]
       }]
@@ -468,7 +480,7 @@ module.exports = {
   userPerms: ['manageWebhooks', 'manageChannels', 'viewAuditLogs'],
   botPerms: ['manageWebhooks', 'viewAuditLogs'],
   noThread: true,
-  func: async interaction => {
+  async execute(interaction) {
     if (interaction.data.options?.find(o => o.name === 'via_presets')) {
       await handlePresetSetup(interaction)
     } else if (interaction.data.options?.find(o => o.name === 'via_individual_event')) {

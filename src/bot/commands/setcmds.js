@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
   name: 'setcmds',
   type: 'creator',
-  func: async interaction => {
+  async execute(interaction) {
     if (require.cache[path.resolve('src', 'bot', 'utils', 'slashcommandconstants.js')]) {
       delete require.cache[path.resolve('src', 'bot', 'utils', 'slashcommandconstants.js')]
     }

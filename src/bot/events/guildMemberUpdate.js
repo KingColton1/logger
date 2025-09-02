@@ -21,8 +21,6 @@ module.exports = {
       return
     }
     const guildMemberUpdate = {
-      guildID: guild.id,
-      eventName: 'guildMemberUpdate',
       embeds: [{
         author: {
           name: `${member.username}#${member.discriminator}`,
@@ -56,7 +54,11 @@ module.exports = {
         value: `\`\`\`ini\nUser = ${member.id}\`\`\``
       })
       if (!guildMemberUpdate.embeds[0].fields[0].value) return
-      await send(guildMemberUpdate)
+  await send({
+    guildID: guild.id,
+    eventName: 'guildMemberUpdate',
+    embeds: guildMemberUpdate.embeds
+  })
     } else if (oldMember?.pending && !member.pending && guild.features.includes('MEMBER_VERIFICATION_GATE_ENABLED')) {
       guildMemberUpdate.eventName = 'guildMemberVerify'
       guildMemberUpdate.embeds[0].description = `${member.mention} (${member.username}#${member.discriminator}: \`${member.id}\`) has verified.`
@@ -66,7 +68,11 @@ module.exports = {
       }
       guildMemberUpdate.embeds[0].color = 0x1ced9a
       delete guildMemberUpdate.embeds[0].fields
-      await send(guildMemberUpdate)
+  await send({
+    guildID: guild.id,
+    eventName: 'timeout',
+    embeds: guildMemberUpdate.embeds
+  })
     } else if (oldMember && oldMember.roles && oldMember.premiumSince != member.premiumSince) {
       const boostRole = guild.roles.find(r => r?.tags?.premium_subscriber === true)
       if (!boostRole) return
@@ -128,18 +134,14 @@ module.exports = {
         value: `\`\`\`ini\nUser = ${member.id}\nPerpetrator = ${user.id}\`\`\``
       })
       if (!guildMemberUpdate.embeds[0].fields[0].value) return
-      await send(guildMemberUpdate)
-    }
-    
-    // Timeout log (WHY ISN'T THIS A SEPARATE EVENT?????)
-    else if (possibleTimeoutLog) {
-      const embedCopyTL = guildMemberUpdate
-      embedCopyTL.eventName = 'guildMemberTimeout'
-      
-      if (!embedCopyTL.eventName == 'guildMemberTimeout') return // Trying to force this bot to actually listen to this event name
-
-      embedCopyTL.embeds[0].description = `${member.username}#${member.discriminator} (${member.mention}) ${member.communicationDisabledUntil ? 'was timed out' : 'had their timeout removed'}`
-      embedCopyTL.embeds[0].author = {
+      await send({
+        guildID: guild.id,
+        eventName: 'timeout',
+        embeds: guildMemberUpdate.embeds
+      })
+    } else if (possibleTimeoutLog) {
+      guildMemberUpdate.embeds[0].description = `${member.username}#${member.discriminator} (${member.mention}) ${member.communicationDisabledUntil ? 'was timed out' : 'had their timeout removed'}`
+      guildMemberUpdate.embeds[0].author = {
         name: `${member.username}#${member.discriminator}`,
         icon_url: member.avatarURL
       }
@@ -173,7 +175,11 @@ module.exports = {
         name: 'ID',
         value: `\`\`\`ini\nUser = ${member.id}\nPerpetrator = ${possibleTimeoutLog.user.id}\`\`\``
       })
-      await send(embedCopyTL)
+      await send({
+        guildID: guild.id,
+        eventName: 'timeout',
+        embeds: guildMemberUpdate.embeds
+      })
     }
   }
 }

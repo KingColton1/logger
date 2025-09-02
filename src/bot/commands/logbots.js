@@ -1,28 +1,39 @@
 const { toggleLogBots } = require('../../db/interfaces/postgres/update')
+const { EMBED_COLORS } = require('../utils/constants')
+const { getEmbedFooter, getAuthorField } = require('../utils/embeds')
 
 module.exports = {
-  func: async message => {
-    const state = await toggleLogBots(message.channel.guild.id)
-    await message.channel.createMessage({
-      embeds: [{
-        title: `${state ? 'I am now logging bot activity.' : 'I am no longer logging bot activity.'}`,
-        color: 16711680,
-        timestamp: new Date(),
-        footer: {
-          icon_url: global.bot.user.avatarURL,
-          text: `${global.bot.user.username}#${global.bot.user.discriminator}`
-        },
-        author: {
-          name: `${message.author.username}#${message.author.discriminator}`,
-          icon_url: message.author.avatarURL
-        },
-        fields: []
-      }]
-    })
-  },
   name: 'logbots',
-  quickHelp: 'Use this to toggle whether I log actions done by bots or not (DEFAULT: disabled). Does NOT ignore bots deleting messages!',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}logbots\` <- toggle whether bot actions are logged, current status will be returned (ignoring or actively logging)`,
-  type: 'admin',
-  category: 'Logging'
+  botPerms: ['manageWebhooks', 'manageChannels'],
+  userPerms: ['manageWebhooks', 'manageChannels'],
+  async execute(interaction) {
+    try {
+      const isLoggingBots = await toggleLogBots(interaction.guildID)
+      interaction.createMessage({
+        embeds: [{
+          description: `Successfully __${isLoggingBots ? 'enabled' : 'disabled'}__ logging edit/deletes of messages that are made by a bot.`,
+          color: EMBED_COLORS.GREEN,
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          author: getAuthorField(interaction.member.user),
+          footer: getEmbedFooter(global.bot.user)
+        }]
+      }).catch(() => {})
+    } catch (e) {
+      global.logger.error(e)
+      interaction.createMessage({
+        embeds: [{
+          title: 'Error',
+          description: 'There was a problem while toggling logbots, try again',
+          color: EMBED_COLORS.RED,
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          author: getAuthorField(interaction.member.user),
+          footer: getEmbedFooter(global.bot.user)
+        }]
+      }).catch(() => {})
+    }
+  }
 }

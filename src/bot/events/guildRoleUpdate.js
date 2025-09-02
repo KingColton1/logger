@@ -70,14 +70,22 @@ module.exports = {
           icon_url: log.user.avatarURL
         }
         if (guildRoleUpdateEvent.embeds[0].fields.length === 1) return
-        await send(guildRoleUpdateEvent)
+        await send({
+          guildID: guild.id,
+          eventName: 'guildRoleUpdate',
+          embeds: guildRoleUpdateEvent.embeds
+        })
       } else {
         guildRoleUpdateEvent.embeds[0].fields.push({
           name: 'ID',
           value: `\`\`\`ini\nRole = ${role.id}\nPerpetrator = Unknown\`\`\``
         })
         if (guildRoleUpdateEvent.embeds[0].fields.length === 1) return
-        await send(guildRoleUpdateEvent)
+        await send({
+          guildID: guild.id,
+          eventName: 'guildRoleUpdate',
+          embeds: guildRoleUpdateEvent.embeds
+        })
       }
     }, 1000)
   }

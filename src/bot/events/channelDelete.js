@@ -72,9 +72,17 @@ module.exports = {
         channelDeleteEvent.embeds[0].author.icon_url = user.avatarURL
         channelDeleteEvent.embeds[0].fields[3].value = `\`\`\`ini\nUser = ${user.id}\nChannel = ${channel.id}\`\`\``
       }
-      await send(channelDeleteEvent)
+      await send({
+        guildID: channel.guild.id,
+        eventName: 'channelDelete',
+        embeds: [channelDeleteEvent.embeds[0]]
+      })
     } else {
-      await send(channelDeleteEvent)
+      await send({
+        guildID: channel.guild.id,
+        eventName: 'channelDelete',
+        embeds: [channelDeleteEvent.embeds[0]]
+      })
     }
   }
 }

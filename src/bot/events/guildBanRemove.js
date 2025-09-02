@@ -37,9 +37,17 @@ module.exports = {
         text: `${perp.username}#${perp.discriminator}`,
         icon_url: perp.avatarURL
       }
-      await send(guildBanRemoveEvent)
+  await send({
+    guildID: guild.id,
+    eventName: 'guildBanRemove',
+    embeds: guildBanRemoveEvent.embeds
+  })
     } else {
-      await send(guildBanRemoveEvent)
+  await send({
+    guildID: guild.id,
+    eventName: 'guildBanRemove',
+    embeds: guildBanRemoveEvent.embeds
+  })
     }
   }
 }

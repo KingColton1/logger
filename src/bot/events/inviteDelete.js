@@ -1,3 +1,4 @@
+const send = require('../modules/webhooksender')
 const inviteCache = require('../modules/invitecache')
 
 module.exports = {
@@ -11,6 +12,17 @@ module.exports = {
         // manual invite deletion still needs to be considered
         await inviteCache.deleteInvite(guild.id, invite.code)
       }, 2000)
+      const inviteDeleteEvent = {
+        embeds: [{
+          description: `Invite \`${invite.code}\` deleted.`,
+          color: 15158332
+        }]
+      }
+      await send({
+        guildID: guild.id,
+        eventName: 'inviteDelete',
+        embeds: inviteDeleteEvent.embeds
+      })
     }
   }
   

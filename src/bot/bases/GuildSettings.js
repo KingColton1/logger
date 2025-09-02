@@ -11,6 +11,9 @@ class GuildSettings {
     this.ignoredChannels = data.ignoredChannels || data.ignored_channels
     this.logBots = data.logBots || data.log_bots
     this.event_logs = data.event_logs
+    if (this.event_logs && !('timeout' in this.event_logs)) {
+      this.event_logs['timeout'] = '';
+    }
     this.allLog = data.logchannel
     this.ownerID = data.ownerID || data.owner_id
     this.disabledEvents = data.disabledEvents || data.disabled_events
@@ -93,4 +96,16 @@ class GuildSettings {
   }
 }
 
-module.exports = GuildSettings
+/**
+ * Retrieve GuildSettings for a given guild ID from cache
+ * @param {string} guildId
+ * @returns {GuildSettings|null}
+ */
+function getGuildSettings(guildId) {
+  return global.bot.guildSettingsCache[guildId] || null;
+}
+
+module.exports = {
+  GuildSettings,
+  getGuildSettings
+}

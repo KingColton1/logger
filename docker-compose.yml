@@ -1,11 +1,12 @@
-version: '3'
 services:
   loggerbot:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       "./.env"
+    command: sh -c "node src/miscellaneous/generateDB.js && node index.js"
     links:
       - postgres
       - redis
@@ -15,30 +16,35 @@ services:
       redis:
         condition: service_healthy
   postgres:
-    image: postgres
+    image: postgres:16
+    restart: unless-stopped
     environment:
-        - POSTGRES_USER=${PGUSER}
-        - POSTGRES_PASSWORD=${PGPASSWORD}
-        - POSTGRES_DB=${PGDATABASE}
-    env_file:
-      "./.env"
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
     ports:
-        - "5432:5432"
+      - "${PGPORT}:5432"
     volumes:
-        - ./pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PGUSER}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
   redis:
-    image: redis:alpine
+    image: redis:7
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     volumes:
-      - ./redisdata:/data
+      - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+volumes:
+  pgdata:
+  redisdata:

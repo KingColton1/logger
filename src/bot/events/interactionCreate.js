@@ -5,8 +5,8 @@ const { EMBED_COLORS } = require('../utils/constants')
 const { getEmbedFooter, getAuthorField } = require('../utils/embeds')
 const { NewsThreadChannel, PrivateThreadChannel, PublicThreadChannel } = require('eris')
 
-let slashCommands = fs.readdirSync(path.resolve('src', 'bot', 'slashcommands')).map(filename => {
-  return require(path.resolve('src', 'bot', 'slashcommands', filename))
+let slashCommands = fs.readdirSync(path.resolve('src', 'bot', 'commands')).map(filename => {
+  return require(path.resolve('src', 'bot', 'commands', filename))
 })
 
 const waitingCustomIDs = new Map()
@@ -33,56 +33,16 @@ module.exports = {
         const channel = global.bot.getChannel(interaction.channel.id)
         if (!channel || channel instanceof Eris.VoiceChannel) return // no need to check send messages because replies are made using webhooks
         if (interaction.data.name === 'reloadinteractions' && interaction.member.user.id === process.env.CREATOR_IDS) {
-          fs.readdirSync(path.resolve('src', 'bot', 'slashcommands')).forEach(filename => {
-            delete require.cache[require.resolve(path.resolve('src', 'bot', 'slashcommands', filename))]
+          fs.readdirSync(path.resolve('src', 'bot', 'commands')).forEach(filename => {
+            delete require.cache[require.resolve(path.resolve('src', 'bot', 'commands', filename))]
           })
-          slashCommands = fs.readdirSync(path.resolve('src', 'bot', 'slashcommands')).map(filename => {
-            return require(path.resolve('src', 'bot', 'slashcommands', filename))
+          slashCommands = fs.readdirSync(path.resolve('src', 'bot', 'commands')).map(filename => {
+            return require(path.resolve('src', 'bot', 'commands', filename))
           })
           interaction.createMessage({ content: '🆗 reloaded slash commands', flags: Eris.Constants.MessageFlags.EPHEMERAL }).catch(() => {})
           resolve()
         }
         const command = slashCommands.find(c => c.name === interaction.data.name)
-        if (command) {
-          if (command?.type === 'creator' && interaction.member.user.id !== process.env.CREATOR_IDS) {
-            return
-          }
-          if (command.noThread && (interaction.channel instanceof NewsThreadChannel || interaction.channel instanceof PrivateThreadChannel || interaction.channel instanceof PublicThreadChannel)) {
-            interaction.createMessage({
-              embeds: [{
-                title: 'Unable to run',
-                color: EMBED_COLORS.YELLOW_ORANGE,
-                description: `__${command.name}__ cannot be ran in a thread.`,
-                footer: getEmbedFooter(global.bot.user),
-                author: getAuthorField(interaction.member.user),
-                thumbnail: {
-                  url: interaction.member.user.dynamicAvatarURL(null, 64)
-                }
-              }],
-              flags: Eris.Constants.MessageFlags.EPHEMERAL
-            }).catch(() => {})
-            return
-          }
-          if (command.userPerms && command.userPerms.length !== 0) {
-            const userChannelPerms = interaction.channel.permissionsOf(interaction.member.user.id).json
-            const missingPermissions = command.userPerms.filter(bpName => !userChannelPerms[bpName])
-            if (missingPermissions.length !== 0) {
-              interaction.createMessage({
-                embeds: [{
-                  title: 'Missing Permissions',
-                  color: EMBED_COLORS.YELLOW_ORANGE,
-                  description: `You are missing the following permissions to run ${command.name}: ${missingPermissions.map(perm => `\`${perm}\``).join(', ')}`,
-                  footer: getEmbedFooter(global.bot.user),
-                  author: getAuthorField(interaction.member.user),
-                  thumbnail: {
-                    url: interaction.member.user.dynamicAvatarURL(null, 64)
-                  }
-                }],
-                flags: Eris.Constants.MessageFlags.EPHEMERAL
-              }).catch(() => {})
-              return
-            }
-          }
           if (command.botPerms && command.botPerms.length !== 0) {
             const botChannelPermissions = interaction.channel.permissionsOf(global.bot.user.id).json
             const missingPermissions = command.botPerms.filter(bpName => !botChannelPermissions[bpName])
@@ -107,7 +67,11 @@ module.exports = {
           if (guild) {
             global.logger.info(`${interaction.member.username}#${interaction.member.discriminator} (${interaction.member.id}) in ${interaction.channel.id} sent /${command.name}. The guild is called "${guild.name}", owned by ${guild.ownerID} and has ${guild.memberCount} members.`)
             try {
-              command.func(interaction)
+              if (typeof command.execute === 'function') {
+                command.execute(interaction)
+              } else {
+                global.logger.error(`Command ${command.name} does not have an execute function.`)
+              }
             } catch (commandError) {
               global.logger.error(commandError) // we do want this to reach sentry if failed
               resolve() // it hurts to use a promise like this
@@ -116,7 +80,6 @@ module.exports = {
             global.logger.warn('Interaction was used but the guild ID sent is not in cache!')
           }
         }
-      }
     })
   },
   awaitCustomID (id, userIDToLock) {

@@ -93,9 +93,17 @@ module.exports = {
         })
       }
       await updateMessageByID(newMessage.id, newMessage.content)
-      await send(messageUpdateEvent)
+      await send({
+        guildID: newMessage.channel.guild.id,
+        eventName: 'messageUpdate',
+        embeds: messageUpdateEvent.embeds
+      })
       if (secondMessageUpdatePayload) {
-        await send(secondMessageUpdatePayload)
+        await send({
+          guildID: newMessage.channel.guild.id,
+          eventName: 'messageUpdate',
+          embeds: secondMessageUpdatePayload.embeds
+        })
       }
     }
   }

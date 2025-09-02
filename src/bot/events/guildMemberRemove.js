@@ -66,7 +66,11 @@ module.exports = {
         name: 'ID',
         value: `\`\`\`ini\nUser = ${member.id}\nPerpetrator = ${user.id}\`\`\``
       })
-      return send(event)
+      return send({
+        guildID: guild.id,
+        eventName: 'guildMemberKick',
+        embeds: event.embeds
+      })
     } else {
       // TODO: redo purge audit log stuff eventually (update: copy from patron bot eventually)
       event.embeds = [{
@@ -94,7 +98,11 @@ module.exports = {
         name: 'ID',
         value: `\`\`\`ini\nUser = ${member.id}\`\`\``
       })
-      return send(event)
+      return send({
+        guildID: guild.id,
+        eventName: 'guildMemberRemove',
+        embeds: event.embeds
+      })
     }
   }
 }

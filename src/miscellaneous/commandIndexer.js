@@ -1,14 +1,21 @@
 const fs = require('fs')
 const path = require('path')
-const GenericCommand = require('../bot/bases/GenericCommand')
 
 module.exports = () => {
-  const files = fs.readdirSync(path.resolve('src', 'bot', 'commands'))
+  const commandsPath = path.resolve('src', 'bot', 'commands')
+  const files = fs.readdirSync(commandsPath)
+  global.bot.commands = {}
   files.forEach(filename => {
-    if (require.cache[path.resolve('src', 'bot', 'commands', filename)]) {
-      delete require.cache[path.resolve('src', 'bot', 'commands', filename)]
+    const commandModulePath = path.join(commandsPath, filename)
+    if (require.cache[commandModulePath]) {
+      delete require.cache[commandModulePath]
     }
-    // truly gross code that should be remade eventually
-    new GenericCommand(require(path.resolve('src', 'bot', 'commands', filename)))
+    const command = require(commandModulePath)
+    // Only register if it has a name and an execute function
+    if (command && command.name && typeof command.execute === 'function') {
+      global.bot.commands[command.name] = command
+    } else {
+      global.logger.warn(`Command ${filename} is missing a name or execute function and will not be registered.`)
+    }
   })
 }

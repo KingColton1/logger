@@ -38,11 +38,18 @@ async function paste (messages, guildID) {
       .post(process.env.PASTE_CREATE_ENDPOINT)
       .set('Authorization', process.env.PASTE_CREATE_TOKEN)
       .set('Content-Type', 'text/plain')
-      .send(pasteString || 'No messages were able to be archived')
-      .end(async (err, res) => {
-        if (!err && res.statusCode === 200 && res.body.key) {
-          messageDeleteBulkEvent.embeds[0].description += `, [link to messages](${process.env.PASTE_BASE_URL}/${res.body.key}.txt)`
-          await send(messageDeleteBulkEvent)
+      .send(pasteString || 'An error has occurred while fetching pastes. Please contact the bot author.')
+      .end((err, res) => {
+        if (!err && res.body && res.statusCode === 200 && res.body.key) {
+          messageDeleteBulkEvent.embeds[0].fields.push({
+            name: 'Link',
+            value: `https://haste.logger.bot/${res.body.key}.txt`
+          })
+          send({
+            guildID: guildID,
+            eventName: 'messageDeleteBulk',
+            embeds: messageDeleteBulkEvent.embeds
+          })
         } else {
           global.logger.error(err, res.body)
           await send(messageDeleteBulkEvent)

@@ -1,65 +1,66 @@
-const clearEventByID = require('../../db/interfaces/postgres/update').clearEventByID
-const cacheGuild = require('../utils/cacheGuild')
-const setEventLogs = require('../../db/interfaces/postgres/update').setEventsLogId
-const eventList = require('../utils/constants').ALL_EVENTS
+const Eris = require('eris')
+const { clearEventByID, setAllEventsOneId } = require('../../db/interfaces/postgres/update')
+const { EMBED_COLORS } = require('../utils/constants.js')
+const { getAuthorField, getEmbedFooter } = require('../utils/embeds.js')
 
 module.exports = {
-  func: async (message, suffix) => {
-    if (!message.channel.guild.members.get(global.bot.user.id).permissions.json.sendMessages) {
-      return
-    }
-
-    let events = suffix.split(', ')
-    events = cleanArray(events)
-    if (events.length === 0 && suffix) {
-      message.channel.createMessage(`<@${message.author.id}>, none of the provided events are valid to be unset. Look at ${process.env.GLOBAL_BOT_PREFIX}help to see what is valid.`)
-    } else if (suffix && events.length !== 0) {
-      await setEventLogs(message.channel.guild.id, '', events)
-      await cacheGuild(message.channel.guild.id)
-      message.channel.createMessage(`<@${message.author.id}>, your selected events will not be logged here anymore.`)
-    } else if (!suffix) {
-      await clearEventByID(message.channel.guild.id, message.channel.id) // any event logging to this channel id will be wiped
-
-      await message.channel.createMessage({
-        embeds: [{
-          title: 'Any events associated with this channel have been undone.',
-          color: 16711680,
-          timestamp: new Date(),
-          footer: {
-            icon_url: global.bot.user.avatarURL,
-            text: `${global.bot.user.username}#${global.bot.user.discriminator}`
-          },
-          author: {
-            name: `${message.author.username}#${message.author.discriminator}`,
-            icon_url: message.author.avatarURL
-          },
-          fields: []
-        }]
-      })
-    }
-  },
   name: 'stoplogging',
-  quickHelp: 'Use this in a log channel to stop me from logging certain (or all) events. This command is the opposite of setchannel and can be used the same way to unset events instead of setting them.',
-  examples: `\`${process.env.GLOBAL_BOT_PREFIX}stoplogging\` <- stops logging every event configured to log to the channel it's used in
-  \`${process.env.GLOBAL_BOT_PREFIX}stoplogging messageDelete, messageUpdate\` <- if the bot was logging messageDelete and messageUpdate to the channel this is used in, now it is unset
-  \`${process.env.GLOBAL_BOT_PREFIX}stoplogging guildMemberVerify\` <- if the bot was logging member verify events to the channel this was used in, it will stop doing so`,
-  type: 'admin',
+  botPerms: ['manageWebhooks', 'manageChannels'],
+  userPerms: ['manageWebhooks', 'manageChannels'],
   noThread: true,
-  category: 'Logging'
-}
-
-function cleanArray (events) {
-  const tempEvents = []
-  events.forEach(event => {
-    if (eventList.includes(event)) {
-      eventList.forEach(validEvent => {
-        const lowerEvent = validEvent.toLowerCase()
-        const upperEvent = validEvent.toUpperCase()
-        if (event === lowerEvent || event === upperEvent || event === validEvent) {
-          tempEvents.push(validEvent)
-        }
-      })
+  async execute(interaction) {
+    const channelToStopLogging = interaction.data.options?.find(o => o.name === 'channel')?.value
+    const shouldStopLoggingEverything = interaction.data.options?.find(o => o.name === 'other')
+    if (shouldStopLoggingEverything) {
+      await setAllEventsOneId(interaction.guildID, '')
+      interaction.createMessage({
+        embeds: [{
+          title: 'Success',
+          description: 'All events have been unset, the bot will stop logging.',
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          color: EMBED_COLORS.GREEN,
+          author: getAuthorField(interaction.member.user),
+          footer: getEmbedFooter(global.bot.user)
+        }],
+        flags: Eris.Constants.MessageFlags.EPHEMERAL
+      }).catch(() => {})
+    } else {
+      const eventsLoggingHere = global.bot.guildSettingsCache[interaction.guildID].eventLogByNames(channelToStopLogging || interaction.channel.id)
+      if (eventsLoggingHere.length === 0) {
+        interaction.createMessage({
+          embeds: [{
+            title: 'Warning',
+            description: `No events were logging to <#${channelToStopLogging || interaction.channel.id}>. Use \`/setup list\` to review the current logging setup.`,
+            thumbnail: {
+              url: interaction.member.user.dynamicAvatarURL(null, 64)
+            },
+            color: EMBED_COLORS.YELLOW_ORANGE,
+            author: getAuthorField(interaction.member.user),
+            footer: getEmbedFooter(global.bot.user)
+          }],
+          flags: Eris.Constants.MessageFlags.EPHEMERAL
+        }).catch(() => {})
+        return
+      }
+      await clearEventByID(interaction.guildID, channelToStopLogging || interaction.channel.id)
+      interaction.createMessage({
+        embeds: [{
+          description: `All events logging to <#${channelToStopLogging || interaction.channel.id}> (${channelToStopLogging || interaction.channel.id}) have been unset.`,
+          thumbnail: {
+            url: interaction.member.user.dynamicAvatarURL(null, 64)
+          },
+          fields: [{
+            name: 'Events unset',
+            value: eventsLoggingHere.join(', ')
+          }],
+          color: EMBED_COLORS.GREEN,
+          author: getAuthorField(interaction.member.user),
+          footer: getEmbedFooter(global.bot.user)
+        }],
+        flags: Eris.Constants.MessageFlags.EPHEMERAL
+      }).catch(() => {})
     }
-  })
-  return tempEvents
+  }
 }

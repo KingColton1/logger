@@ -81,7 +81,11 @@ module.exports = {
       name: 'ID',
       value: `\`\`\`ini\nMember = ${member.id}\nGuild = ${guild.id}\`\`\``
     })
-    await send(GMAEvent)
+    await send({
+      guildID: guild.id,
+      eventName: 'guildMemberAdd',
+      embeds: GMAEvent.embeds
+    })
   }
 }
 
