@@ -58,7 +58,7 @@ async function handlePresetSetup (interaction, recursionUUID) {
           label: 'Moderation Events',
           description: 'Member banned/unbanned, kicked, and timed out',
           value: 'moderation',
-          default: interaction.channel.id === guildEvents.guildBanAdd && interaction.channel.id === guildEvents.guildBanRemove && interaction.channel.id === guildEvents.guildMemberKick && interaction.channel.id === guildEvents.guildMemberTimeout
+          default: interaction.channel.id === guildEvents.guildBanAdd && interaction.channel.id === guildEvents.guildBanRemove && interaction.channel.id === guildEvents.guildMemberKick
         }, {
           label: 'Joinlog Events',
           description: '(Requires manage server & manage channels to be accurate) member join/leave',
@@ -303,9 +303,9 @@ async function handleIndividualSetup (interaction, recursionUUID) {
         {
           label: 'Member Timeout',
           description: 'On member being timed out',
-          value: 'guildMemberTimeout',
+          value: 'timeout',
           default: guildEvents
-            .guildMemberTimeout ===
+            .guildMemberUpdate ===
             interaction.channel.id
         },
         {
@@ -329,9 +329,9 @@ async function handleIndividualSetup (interaction, recursionUUID) {
         {
           label: 'Member Timeout',
           description: 'On member being timed out',
-          value: 'guildMemberTimeout',
+          value: 'timeout',
           default: guildEvents
-            .guildMemberTimeout ===
+            .guildMemberUpdate ===
             interaction.channel.id
         },
         {

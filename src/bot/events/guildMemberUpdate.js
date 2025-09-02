@@ -140,7 +140,6 @@ module.exports = {
         embeds: guildMemberUpdate.embeds
       })
     } else if (possibleTimeoutLog) {
-      guildMemberUpdate.eventName = 'guildMemberTimeout'
       guildMemberUpdate.embeds[0].description = `${member.username}#${member.discriminator} (${member.mention}) ${member.communicationDisabledUntil ? 'was timed out' : 'had their timeout removed'}`
       guildMemberUpdate.embeds[0].author = {
         name: `${member.username}#${member.discriminator}`,
