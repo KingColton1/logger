@@ -86,6 +86,12 @@ async function init () {
   await cacheGuildInfo()
 
   addBotListeners()
+    // to save resources in small VPS, delete old messages that are older than X days (default 90 days)
+    const pruneOldMessages = require('../miscellaneous/pruneOldMessages')
+    const PRUNE_INTERVAL_HOURS = parseInt(process.env.PRUNE_INTERVAL_HOURS || '24', 10); // Default: every 24 hours
+    setInterval(() => {
+      pruneOldMessages().catch(e => console.error('Scheduled prune error:', e));
+    }, PRUNE_INTERVAL_HOURS * 60 * 60 * 1000);
 
   if (process.env.BEZERK_URI && process.env.BEZERK_SECRET) {
     global.logger.info('Using bridge for website')
